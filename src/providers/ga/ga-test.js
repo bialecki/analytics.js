@@ -82,18 +82,21 @@
         spy.restore();
     });
 
-    test('adds canonical url from meta tag if present', function () {
+    test('adds canonical url from meta tag if present', function (done) {
         // Add the meta tag we need.
         var $meta = $('<meta rel="canonical" href="http://google.com/a-thing">').appendTo('head');
 
-        window._gaq = [];
-        var spy = sinon.spy(window._gaq, 'push');
+        setTimeout(function () {
+          window._gaq = [];
+          var spy = sinon.spy(window._gaq, 'push');
 
-        analytics.initialize({ 'Google Analytics' : 'x' });
+          analytics.initialize({ 'Google Analytics' : 'x' });
 
-        expect(spy.calledWith(['_trackPageview', '/a-thing'])).to.be(true);
-        spy.restore();
-        $meta.remove();
+          expect(spy.calledWith(['_trackPageview', '/a-thing'])).to.be(true);
+          spy.restore();
+          $meta.remove();
+          done();
+        }, 100);
     });
 
     test('doesnt add canonical url from meta tag if not present', function () {
