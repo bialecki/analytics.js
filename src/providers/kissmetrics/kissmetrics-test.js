@@ -30,9 +30,6 @@
         expect(window._kmq.push).to.equal(Array.prototype.push);
         expect(analytics.providers[0].settings.apiKey).to.equal(apiKey);
 
-        analytics.track('Some event');
-        analytics.identify('some_user');
-
         setTimeout(function () {
 
             expect(window._kmq.push).not.to.equal(Array.prototype.push);
