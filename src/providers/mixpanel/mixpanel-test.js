@@ -53,7 +53,7 @@
         setTimeout(function () {
             expect(window.mixpanel.config).not.to.be(undefined);
             done();
-        }, 1000);
+        }, 1900);
     });
 
 
@@ -114,7 +114,7 @@
 
         spy.reset();
         analytics.identify(userId, traits);
-        expect(spy.calledWith(userId)).to.be(true);
+        expect(spy.calledWith(traits.email)).to.be(true);
 
         spy.restore();
     });
@@ -160,6 +160,18 @@
         spy.restore();
     });
 
+    test('calls track_charge on track with revenue', function () {
+        analytics.providers[0].settings.people = true;
+        var spy = sinon.spy(window.mixpanel.people, 'track_charge');
+
+        analytics.track(event, { revenue : 9.99 });
+
+        expect(spy.calledWith(9.99)).to.be(true);
+
+        spy.restore();
+        analytics.providers[0].settings.people = false;
+    });
+
 
     // Pageview
     // --------
@@ -172,6 +184,18 @@
         spy.reset();
         analytics.pageview('/url');
         expect(spy.calledWith('/url')).to.be(true);
+
+        spy.restore();
+    });
+
+
+    // Alias
+    // -----
+
+    test('calls alias on alias', function () {
+        var spy = sinon.spy(window.mixpanel, 'alias');
+        analytics.alias('new', 'old');
+        expect(spy.calledWith('new', 'old')).to.be(true);
 
         spy.restore();
     });

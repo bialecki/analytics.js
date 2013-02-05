@@ -1,8 +1,54 @@
+0.5.1 / 2013-2-4
+=================
+
+* Merging in fix for Keen IO's branding
+
+0.5.0 / 2013-2-1
+=================
+
+* Added an `alias` method for merging two user's by ID
+
+0.4.10 / 2013-1-30
+=================
+
+* Fix for multiple elements on `trackLink` and `trackForm`
+* Fix for CrazyEgg `apiKey` to `accountNumber`
+* Fix for Keen to Keen.io
+
+
+0.4.9 / 2013-1-29
+=================
+
+* Fix for `alias` and `extend` breaking on non-objects
+
+0.4.8 / 2013-1-29
+=================
+
+* Fix for `trackForm` timeout by [@Plasma](https://github.com/Plasma)
+
+0.4.7 / 2013-1-29
+=================
+
+* Added support for Mixpanel's [revenue](https://mixpanel.com/docs/people-analytics/javascript#track_charge) feature
+* Added support for KISSmetrics' `"Billing Amount"` property for revenue
+* Added support for `revenue` being passed to Google Analytics' `value` property
+
+0.4.6 / 2013-1-28
+=================
+
+* Automatically handle canonical URLs in Google Analytics
+
+0.4.5 / 2013-1-25
+=================
+
+* Add Intercom widget setting
+* Fix for Chartbeat required `body` element to exist
+
 0.4.4 / 2013-1-21
 =================
 
 * [Bitdeli] support added by [@jtuulos](https://github.com/jtuulos)
-* Added Mixpanel `$first_name` and `$last_name` aliases
+* Mixpanel `$first_name` and `$last_name` aliases added by [@dwradcliffe](https://github.com/dwradcliffe)
 * Fixed Mixpanel `$last_seen` alias
 * Added `parseUrl` util
 * Moving gosquared queue to snippet

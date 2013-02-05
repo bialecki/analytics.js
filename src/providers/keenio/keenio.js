@@ -1,8 +1,8 @@
-// Keen IO
+// Keen.io
 // -------
 // [Documentation](https://keen.io/docs/).
 
-analytics.addProvider('Keen', {
+analytics.addProvider('Keen IO', {
 
     settings: {
         projectId : null,

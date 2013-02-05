@@ -32,7 +32,7 @@ analytics.addProvider('Google Analytics', {
             _gaq.push(['_setDomainName', this.settings.domain]);
         }
         if (this.settings.enhancedLinkAttribution) {
-            var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
+            var pluginUrl = (('https:' === document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
             _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
         }
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
@@ -41,11 +41,19 @@ analytics.addProvider('Google Analytics', {
         if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);
         }
-        _gaq.push(['_trackPageview']);
+
+        // Check to see if there is a canonical meta tag to use as the URL.
+        var canonicalUrl, metaTags = document.getElementsByTagName('meta');
+        for (var i = 0, tag; tag = metaTags[i]; i++) {
+            if (tag.getAttribute('rel') === 'canonical') {
+                canonicalUrl = analytics.utils.parseUrl(tag.getAttribute('href')).pathname;
+            }
+        }
+        _gaq.push(['_trackPageview', canonicalUrl]);
 
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            ga.src = ('https:' === document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
     },
@@ -60,18 +68,18 @@ analytics.addProvider('Google Analytics', {
         var value;
 
         // Since value is a common property name, ensure it is a number
-        if (analytics.utils.isNumber(properties.value))
-            value = properties.value;
+        if (analytics.utils.isNumber(properties.value)) value = properties.value;
 
         // Try to check for a `category` and `label`. A `category` is required,
         // so if it's not there we use `'All'` as a default. We can safely push
-        // undefined if the special properties don't exist.
+        // undefined if the special properties don't exist. Try using revenue
+        // first, but fall back to a generic `value` as well.
         window._gaq.push([
             '_trackEvent',
             properties.category || 'All',
             event,
             properties.label,
-            value,
+            Math.round(properties.revenue) || value,
             properties.noninteraction
         ]);
     },

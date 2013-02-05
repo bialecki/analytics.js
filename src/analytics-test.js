@@ -5,15 +5,14 @@
         initialize : function (settings) {},
         identify   : function (userId, traits) {},
         track      : function (event, properties) {},
-        pageview   : function () {}
+        pageview   : function () {},
+        alias      : function (newId, originalId) {}
     };
     analytics.addProvider('test', provider);
 
     // Initialize the provider above so that everything works even when looking
     // at a single test case.
-    analytics.initialize({
-        'test' : 'x'
-    });
+    analytics.initialize({ 'test' : 'x' });
 
 
     // Initialize
@@ -275,6 +274,34 @@
         spy.restore();
     });
 
+    test('triggers a track and loads the correct href on a link click with multiple links', function (done) {
+        var spy  = sinon.spy(provider, 'track');
+        var link1 = $('<a href="#test1">')[0];
+        var link2 = $('<a href="#test2">')[0];
+        var link3 = $('<a href="#test3">')[0];
+
+        // Make sure hash is reset.
+        window.location.hash = '';
+
+        analytics.trackLink([link1, link2, link3], 'party');
+
+        triggerClick(link2);
+
+        // Expect the track call to have happened, but for the href not to have
+        // been applied yet.
+        expect(spy.calledWith('party')).to.be(true);
+        expect(window.location.hash).not.to.equal('#test2');
+
+        // Expect the href to be applied after the timeout that gives events
+        // time to send requests.
+        setTimeout(function () {
+            expect(window.location.hash).to.equal('#test2');
+            done();
+        }, analytics.timeout);
+
+        spy.restore();
+    });
+
     test('triggers a track but doesnt load an href on an href with blank target', function () {
         var spy  = sinon.spy(provider, 'track');
         var link = $('<a href="http://google.com" target="_blank">')[0];
@@ -332,7 +359,7 @@
         spy.restore();
     });
 
-    test('triggers a track on a $form submit', function () {
+    test('triggers a track on a form submit', function () {
         var spy   = sinon.spy(provider, 'track');
         var $form = $('<form action="http://google.com" target="_blank"><input type="submit" /></form>');
 
@@ -392,6 +419,22 @@
     });
 
 
+    // Alias
+    // -----
+
+    suite('alias');
+
+    test('gets called on providers', function () {
+        var spy = sinon.spy(provider, 'alias');
+
+        analytics.alias();
+
+        expect(spy.called).to.be(true);
+
+        spy.restore();
+    });
+
+
     // Utils
     // -----
 
@@ -407,6 +450,12 @@
 
         expect(analytics.utils.clone(object)).not.to.equal(object);
         expect(analytics.utils.clone(object)).to.eql(object);
+    });
+
+    test('extend doesnt break on a non object', function () {
+        expect(function () {
+            analytics.utils.clone(undefined);
+        }).to.not.throwException();
     });
 
     test('extend augments an object', function () {
@@ -440,6 +489,16 @@
         });
     });
 
+    test('extend doesnt break on a non object', function () {
+        expect(function () {
+            analytics.utils.extend(undefined, { email: '$email' });
+        }).to.not.throwException();
+
+        expect(function () {
+            analytics.utils.extend({ email: 'ian@segment.io' }, undefined);
+        }).to.not.throwException();
+    });
+
     test('alias changes props to their aliases', function () {
         var traits = {
             name  : 'Medusa',
@@ -459,6 +518,16 @@
             name   : 'Medusa',
             $email : 'medusa@segment.io'
         });
+    });
+
+    test('alias doesnt break on a non object', function () {
+        expect(function () {
+            analytics.utils.alias(undefined, { email: '$email' });
+        }).to.not.throwException();
+
+        expect(function () {
+            analytics.utils.alias({ email: 'ian@segment.io' }, undefined);
+        }).to.not.throwException();
     });
 
     test('getSeconds returns the seconds of a date', function () {
@@ -544,6 +613,16 @@
             search   : '?search=hi',
             query    : 'search=hi'
         });
+    });
+
+    test('setting and getting a cookie works and matches', function () {
+        var name = 'AlbatrossesWith5Eyes';
+        var value = '18 <221l3k1j2!@#!@#/>';
+        var expirationDays = 4;
+
+        analytics.utils.setCookie(name, value, expirationDays);
+
+        expect(analytics.utils.getCookie(name)).to.eql(value);
     });
 
 })();

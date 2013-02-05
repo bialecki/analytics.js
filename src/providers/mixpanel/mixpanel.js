@@ -7,7 +7,9 @@
 analytics.addProvider('Mixpanel', {
 
     settings : {
+        // Whether to call `mixpanel.nameTag` on `identify`.
         nameTag : true,
+        // Whether to use Mixpanel's People API.
         people  : false,
         token   : null
     },
@@ -87,7 +89,7 @@ analytics.addProvider('Mixpanel', {
         // against settings to make sure they're enabled.
         if (userId) {
             window.mixpanel.identify(userId);
-            if (this.settings.nameTag) window.mixpanel.name_tag(userId);
+            if (this.settings.nameTag) window.mixpanel.name_tag(traits && traits.$email || userId);
         }
         if (traits) {
             window.mixpanel.register(traits);
@@ -101,6 +103,12 @@ analytics.addProvider('Mixpanel', {
 
     track : function (event, properties) {
         window.mixpanel.track(event, properties);
+
+        // Mixpanel handles revenue with a `transaction` call in their People
+        // feature. So if we're using people, record a transcation.
+        if (properties && properties.revenue && this.settings.people) {
+            window.mixpanel.people.track_charge(properties.revenue);
+        }
     },
 
 
@@ -111,6 +119,16 @@ analytics.addProvider('Mixpanel', {
     // Mixpanel stream.
     pageview : function (url) {
         window.mixpanel.track_pageview(url);
+    },
+
+
+    // Alias
+    // -----
+
+    // Although undocumented, Mixpanel actually supports the `originalId`. It
+    // just usually defaults to the current user's `distinct_id`.
+    alias : function (newId, originalId) {
+        window.mixpanel.alias(newId, originalId);
     }
 
 });

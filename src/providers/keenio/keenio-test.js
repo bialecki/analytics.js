@@ -1,7 +1,7 @@
 /*global sinon, suite, beforeEach, test, expect, analytics */
 !(function() {
 
-    suite('Keen');
+    suite('Keen IO');
 
     var event = 'someEventName';
 
@@ -24,7 +24,7 @@
         expect(window.Keen).not.to.exist;
 
         analytics.initialize({
-            'Keen': {
+            'Keen IO': {
                 projectId : 'KEEN_PROJECT_ID',
                 apiKey    : 'KEEN_API_KEY'
             }
@@ -40,7 +40,7 @@
         setTimeout(function () {
             expect(window.Keen.Base64).not.to.be(undefined);
             done();
-        }, 1000);
+        }, 1900);
     });
 
 

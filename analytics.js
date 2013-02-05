@@ -1,4 +1,4 @@
-//     Analytics.js 0.4.4
+//     Analytics.js 0.5.1
 
 //     (c) 2013 Segment.io Inc.
 //     Analytics.js may be freely distributed under the MIT license.
@@ -26,7 +26,7 @@
 
         // The amount of milliseconds to wait for requests to providers to clear
         // before navigating away from the current page.
-        timeout : 250,
+        timeout : 300,
 
 
         // Providers
@@ -207,46 +207,47 @@
             // arrays, which allows for passing jQuery objects.
             if (this.utils.isElement(link)) link = [link];
 
+            var self = this;
+
             // Bind to all the links in the array.
             for (var i = 0; i < link.length; i++) {
-                var self = this;
-                var el = link[i];
+                (function (el) {
+                    self.utils.bind(el, 'click', function (e) {
 
-                this.utils.bind(el, 'click', function (e) {
+                        // Allow for properties to be a function. And pass it the
+                        // link element that was clicked.
+                        if (self.utils.isFunction(properties)) properties = properties(el);
 
-                    // Allow for properties to be a function. And pass it the
-                    // link element that was clicked.
-                    if (self.utils.isFunction(properties)) properties = properties(el);
+                        // Fire a normal track call.
+                        self.track(event, properties);
 
-                    // Fire a normal track call.
-                    self.track(event, properties);
+                        // To justify us preventing the default behavior we must:
+                        //
+                        // * Have an `href` to use.
+                        // * Not have a `target="_blank"` attribute.
+                        // * Not have any special keys pressed, because they might
+                        // be trying to open in a new tab, or window, or download
+                        // the asset.
+                        //
+                        // This might not cover all cases, but we'd rather throw out
+                        // an event than miss a case that breaks the experience.
+                        if (el.href && el.target !== '_blank' && !self.utils.isMeta(e)) {
 
-                    // To justify us preventing the default behavior we must:
-                    //
-                    // * Have an `href` to use.
-                    // * Not have a `target="_blank"` attribute.
-                    // * Not have any special keys pressed, because they might
-                    // be trying to open in a new tab, or window, or download
-                    // the asset.
-                    //
-                    // This might not cover all cases, but we'd rather throw out
-                    // an event than miss a case that breaks the experience.
-                    if (el.href && el.target !== '_blank' && !self.utils.isMeta(e)) {
+                            // Prevent the link's default redirect in all the sane
+                            // browsers, and also IE.
+                            if (e.preventDefault)
+                                e.preventDefault();
+                            else
+                                e.returnValue = false;
 
-                        // Prevent the link's default redirect in all the sane
-                        // browsers, and also IE.
-                        if (e.preventDefault)
-                            e.preventDefault();
-                        else
-                            e.returnValue = false;
-
-                        // Navigate to the url after a small timeout, giving the
-                        // providers time to track the event.
-                        setTimeout(function () {
-                            window.location.href = el.href;
-                        }, self.timeout);
-                    }
-                });
+                            // Navigate to the url after a small timeout, giving the
+                            // providers time to track the event.
+                            setTimeout(function () {
+                                window.location.href = el.href;
+                            }, self.timeout);
+                        }
+                    });
+                })(link[i]);
             }
         },
 
@@ -272,33 +273,34 @@
             // arrays, which allows for passing jQuery objects.
             if (this.utils.isElement(form)) form = [form];
 
+            var self = this;
+
             // Bind to all the forms in the array.
             for (var i = 0; i < form.length; i++) {
-                var self = this;
-                var el = form[i];
+                (function (el) {
+                    self.utils.bind(el, 'submit', function (e) {
 
-                this.utils.bind(el, 'submit', function (e) {
+                        // Allow for properties to be a function. And pass it the
+                        // form element that was submitted.
+                        if (self.utils.isFunction(properties)) properties = properties(el);
 
-                    // Allow for properties to be a function. And pass it the
-                    // form element that was submitted.
-                    if (self.utils.isFunction(properties)) properties = properties(el);
+                        // Fire a normal track call.
+                        self.track(event, properties);
 
-                    // Fire a normal track call.
-                    self.track(event, properties);
+                        // Prevent the form's default submit in all the sane
+                        // browsers, and also IE.
+                        if (e.preventDefault)
+                            e.preventDefault();
+                        else
+                            e.returnValue = false;
 
-                    // Prevent the form's default submit in all the sane
-                    // browsers, and also IE.
-                    if (e.preventDefault)
-                        e.preventDefault();
-                    else
-                        e.returnValue = false;
-
-                    // Submit the form after a small timeout, giving the event
-                    // time to get fired.
-                    setTimeout(function () {
-                        el.submit();
-                    }, this.timeout);
-                });
+                        // Submit the form after a small timeout, giving the event
+                        // time to get fired.
+                        setTimeout(function () {
+                            el.submit();
+                        }, self.timeout);
+                    });
+                })(form[i]);
             }
         },
 
@@ -326,6 +328,32 @@
             for (var i = 0, provider; provider = this.providers[i]; i++) {
                 if (!provider.pageview) continue;
                 provider.pageview(url);
+            }
+        },
+
+
+        // Alias
+        // -----
+
+        // Alias combines two previously unassociated user identities. This
+        // comes in handy if the same user visits from two different devices and
+        // you want to combine their history. Some providers also don't alias
+        // automatically for you when an anonymous user signs up (like
+        // Mixpanel), so you need to call `alias` manually right after sign up
+        // with their brand new `userId`.
+        //
+        // * `newId` is the new ID you want to associate the user with.
+        //
+        // * `originalId` (optional) is the original ID that the user was
+        // recognized by. This defaults to the currently identified user's ID if
+        // there is one. In most cases you don't need to pass this argument.
+        alias : function (newId, originalId) {
+            if (!this.initialized) return;
+
+            // Call `alias` on all of our enabled providers that support it.
+            for (var i = 0, provider; provider = this.providers[i]; i++) {
+                if (!provider.alias) continue;
+                provider.alias(newId, originalId);
             }
         },
 
@@ -373,8 +401,12 @@
             // Based off of the [underscore](https://github.com/documentcloud/underscore/blob/master/underscore.js#L763)
             // method.
             extend : function (obj) {
+                if (!this.isObject(obj)) return;
+
                 var args = Array.prototype.slice.call(arguments, 1);
                 for (var i = 0, source; source = args[i]; i++) {
+                    if (!this.isObject(source)) return;
+
                     for (var property in source) {
                         obj[property] = source[property];
                     }
@@ -394,6 +426,8 @@
             // Useful for abstracting over providers that require specific key
             // names.
             alias : function (obj, aliases) {
+                if (!this.isObject(obj)) return;
+
                 for (var prop in aliases) {
                     var alias = aliases[prop];
                     if (obj[prop] !== undefined) {
@@ -478,6 +512,28 @@
                     search   : a.search,
                     query    : a.search.slice(1)
                 };
+            },
+
+            // A helper to get cookies
+            getCookie : function (name) {
+                if (document.cookie.length > 0) {
+                    var start = document.cookie.indexOf(name + '=');
+                    if (start !== -1) {
+                        start = start + name.length + 1;
+                        var end = document.cookie.indexOf(";", start);
+                        if (end === -1)
+                            end = document.cookie.length;
+                        return unescape(document.cookie.substring(start, end));
+                    }
+                }
+            },
+
+            // A helper to set cookies
+            setCookie : function (name, value, expirationDays) {
+                var expirationDate = new Date();
+                expirationDate.setDate(expirationDate.getDate() + expirationDays);
+                var expirationAndPath = (expirationDays === null ? '' : ';expires=' + expirationDate.toGMTString() + ';path=' + escape('/'));
+                document.cookie = name + '=' + escape(value) + expirationAndPath;
             }
         }
 
@@ -609,15 +665,16 @@ analytics.addProvider('Chartbeat', {
         (function(){
             // Use the stored date from when we were loaded.
             window._sf_endpt = analytics.date.getTime();
+            var f = document.getElementsByTagName('script')[0];
             var e = document.createElement('script');
             e.setAttribute('language', 'javascript');
             e.setAttribute('type', 'text/javascript');
             e.setAttribute('src',
-                (('https:' == document.location.protocol) ?
+                (('https:' === document.location.protocol) ?
                     'https://a248.e.akamai.net/chartbeat.download.akamai.com/102508/' :
                     'http://static.chartbeat.com/') +
                 'js/chartbeat.js');
-            document.body.appendChild(e);
+            f.parentNode.insertBefore(e, f);
         })();
     },
 
@@ -720,7 +777,7 @@ analytics.addProvider('comScore', {
 analytics.addProvider('CrazyEgg', {
 
     settings : {
-        apiKey : null
+        accountNumber : null
     },
 
 
@@ -729,17 +786,19 @@ analytics.addProvider('CrazyEgg', {
 
     // Changes to the CrazyEgg snippet:
     //
-    // * Concatenate `apiKey` into the URL.
+    // * Concatenate `accountNumber` into the URL.
     initialize : function (settings) {
-        settings = analytics.utils.resolveSettings(settings, 'apiKey');
+        settings = analytics.utils.resolveSettings(settings, 'accountNumber');
         analytics.utils.extend(this.settings, settings);
 
-        var apiKey = this.settings.apiKey;
+        var accountNumber = this.settings.accountNumber;
+        var accountPath = accountNumber.slice(0, 4) + '/' + accountNumber.slice(4);
+        
         (function(){
             var a = document.createElement('script');
             var b = document.getElementsByTagName('script')[0];
             var protocol = ('https:' == document.location.protocol) ? 'https:' : 'http:';
-            a.src = protocol+'//dnn506yrbagrg.cloudfront.net/pages/scripts/'+apiKey+'.js?'+Math.floor(new Date().getTime()/3600000);
+            a.src = protocol+'//dnn506yrbagrg.cloudfront.net/pages/scripts/'+accountPath+'.js?'+Math.floor(new Date().getTime()/3600000);
             a.async = true;
             a.type = 'text/javascript';
             b.parentNode.insertBefore(a,b);
@@ -1004,7 +1063,7 @@ analytics.addProvider('Google Analytics', {
             _gaq.push(['_setDomainName', this.settings.domain]);
         }
         if (this.settings.enhancedLinkAttribution) {
-            var pluginUrl = (('https:' == document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
+            var pluginUrl = (('https:' === document.location.protocol) ? 'https://www.' : 'http://www.') + 'google-analytics.com/plugins/ga/inpage_linkid.js';
             _gaq.push(['_require', 'inpage_linkid', pluginUrl]);
         }
         if (analytics.utils.isNumber(this.settings.siteSpeedSampleRate)) {
@@ -1013,11 +1072,19 @@ analytics.addProvider('Google Analytics', {
         if(this.settings.anonymizeIp) {
             _gaq.push(['_gat._anonymizeIp']);
         }
-        _gaq.push(['_trackPageview']);
+
+        // Check to see if there is a canonical meta tag to use as the URL.
+        var canonicalUrl, metaTags = document.getElementsByTagName('meta');
+        for (var i = 0, tag; tag = metaTags[i]; i++) {
+            if (tag.getAttribute('rel') === 'canonical') {
+                canonicalUrl = analytics.utils.parseUrl(tag.getAttribute('href')).pathname;
+            }
+        }
+        _gaq.push(['_trackPageview', canonicalUrl]);
 
         (function() {
             var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            ga.src = ('https:' === document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
             var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
         })();
     },
@@ -1032,18 +1099,18 @@ analytics.addProvider('Google Analytics', {
         var value;
 
         // Since value is a common property name, ensure it is a number
-        if (analytics.utils.isNumber(properties.value))
-            value = properties.value;
+        if (analytics.utils.isNumber(properties.value)) value = properties.value;
 
         // Try to check for a `category` and `label`. A `category` is required,
         // so if it's not there we use `'All'` as a default. We can safely push
-        // undefined if the special properties don't exist.
+        // undefined if the special properties don't exist. Try using revenue
+        // first, but fall back to a generic `value` as well.
         window._gaq.push([
             '_trackEvent',
             properties.category || 'All',
             event,
             properties.label,
-            value,
+            Math.round(properties.revenue) || value,
             properties.noninteraction
         ]);
     },
@@ -1290,7 +1357,10 @@ analytics.addProvider('HubSpot', {
 analytics.addProvider('Intercom', {
 
     settings : {
-        appId : null
+        appId  : null,
+
+        // An optional setting to display the Intercom inbox widget.
+        activator : null
     },
 
 
@@ -1319,7 +1389,7 @@ analytics.addProvider('Intercom', {
         if (!userId) return;
 
         // Pass traits directly in to Intercom's `custom_data`.
-        window.intercomSettings = {
+        var settings = window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
             user_hash   : this.settings.userHash,
@@ -1328,14 +1398,21 @@ analytics.addProvider('Intercom', {
 
         // Augment `intercomSettings` with some of the special traits.
         if (traits) {
-            window.intercomSettings.email = traits.email;
-            window.intercomSettings.name = traits.name;
-            window.intercomSettings.created_at = analytics.utils.getSeconds(traits.created);
+            settings.email = traits.email;
+            settings.name = traits.name;
+            settings.created_at = analytics.utils.getSeconds(traits.created);
         }
 
         // If they didn't pass an email, check to see if the `userId` qualifies.
         if (analytics.utils.isEmail(userId) && (traits && !traits.email)) {
-            window.intercomSettings.email = userId;
+            settings.email = userId;
+        }
+
+        // Optionally add the widget.
+        if (this.settings.activator) {
+            settings.widget = {
+                activator : this.settings.activator
+            };
         }
 
         function async_load() {
@@ -1355,11 +1432,11 @@ analytics.addProvider('Intercom', {
 });
 
 
-// Keen IO
+// Keen.io
 // -------
 // [Documentation](https://keen.io/docs/).
 
-analytics.addProvider('Keen', {
+analytics.addProvider('Keen IO', {
 
     settings: {
         projectId : null,
@@ -1470,7 +1547,23 @@ analytics.addProvider('KISSmetrics', {
     // -----
 
     track : function (event, properties) {
+        // KISSmetrics handles revenue with the `'Billing Amount'` property by
+        // default, although it's changeable in the interface.
+        analytics.utils.alias(properties, {
+            'revenue' : 'Billing Amount'
+        });
+
         window._kmq.push(['record', event, properties]);
+    },
+
+
+    // Alias
+    // -----
+
+    // Although undocumented, KISSmetrics actually supports not passing a second
+    // ID, in which case it uses the currenty identified user's ID.
+    alias : function (newId, originalId) {
+        window._kmq.push(['alias', newId, originalId]);
     }
 
 });
@@ -1543,7 +1636,9 @@ analytics.addProvider('Klaviyo', {
 analytics.addProvider('Mixpanel', {
 
     settings : {
+        // Whether to call `mixpanel.nameTag` on `identify`.
         nameTag : true,
+        // Whether to use Mixpanel's People API.
         people  : false,
         token   : null
     },
@@ -1623,7 +1718,7 @@ analytics.addProvider('Mixpanel', {
         // against settings to make sure they're enabled.
         if (userId) {
             window.mixpanel.identify(userId);
-            if (this.settings.nameTag) window.mixpanel.name_tag(userId);
+            if (this.settings.nameTag) window.mixpanel.name_tag(traits && traits.$email || userId);
         }
         if (traits) {
             window.mixpanel.register(traits);
@@ -1637,6 +1732,12 @@ analytics.addProvider('Mixpanel', {
 
     track : function (event, properties) {
         window.mixpanel.track(event, properties);
+
+        // Mixpanel handles revenue with a `transaction` call in their People
+        // feature. So if we're using people, record a transcation.
+        if (properties && properties.revenue && this.settings.people) {
+            window.mixpanel.people.track_charge(properties.revenue);
+        }
     },
 
 
@@ -1647,6 +1748,16 @@ analytics.addProvider('Mixpanel', {
     // Mixpanel stream.
     pageview : function (url) {
         window.mixpanel.track_pageview(url);
+    },
+
+
+    // Alias
+    // -----
+
+    // Although undocumented, Mixpanel actually supports the `originalId`. It
+    // just usually defaults to the current user's `distinct_id`.
+    alias : function (newId, originalId) {
+        window.mixpanel.alias(newId, originalId);
     }
 
 });
@@ -1834,9 +1945,10 @@ analytics.addProvider('USERcycle', {
             e.setAttribute('type', 'text/javascript');
             var protocol = 'https:' == document.location.protocol ? 'https://' : 'http://';
             e.setAttribute('src', protocol+'api.usercycle.com/javascripts/track.js');
-            document.body.appendChild(e);
+            var f = document.getElementsByTagName('script')[0];
+            f.parentNode.insertBefore(e, f);
         })();
-        
+
         window._uc.push(['_key', settings.key]);
     },
 
