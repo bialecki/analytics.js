@@ -26,7 +26,9 @@ analytics.addProvider('Google Analytics', {
         settings = analytics.utils.resolveSettings(settings, 'trackingId');
         analytics.utils.extend(this.settings, settings);
 
-        var _gaq = window._gaq = window._gaq || [];
+        window._gaq = window._gaq || [];
+        var _gaq = window._gaq;
+
         _gaq.push(['_setAccount', this.settings.trackingId]);
         if(this.settings.domain) {
             _gaq.push(['_setDomainName', this.settings.domain]);

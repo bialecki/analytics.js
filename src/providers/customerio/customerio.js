@@ -20,8 +20,9 @@ analytics.addProvider('Customer.io', {
         analytics.utils.extend(this.settings, settings);
 
         var self = this;
+        window._cio = window._cio || [];
+        var _cio = window._cio;
 
-        var _cio = window._cio = window._cio || [];
         (function() {
             var a,b,c;
             a = function (f) {
