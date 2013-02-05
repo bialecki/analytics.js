@@ -24,7 +24,8 @@ analytics.addProvider('GoSquared', {
         settings = analytics.utils.resolveSettings(settings, 'siteToken');
         analytics.utils.extend(this.settings, settings);
 
-        var GoSquared = window.GoSquared = {};
+        window.GoSquared = {};
+        var GoSquared = window.GoSquared;
         GoSquared.acct = this.settings.siteToken;
         GoSquared.q = [];
 

@@ -33,7 +33,9 @@ analytics.addProvider('Bitdeli', {
 
         utils.extend(this.settings, settings);
 
-        var _bdq = window._bdq = window._bdq || [];
+        window._bdq = window._bdq || [];
+        var _bdq = window._bdq;
+
         _bdq.push(["setAccount", this.settings.inputId, this.settings.authToken]);
         if (this.settings.initialPageview) _bdq.push(["trackPageview"]);
 

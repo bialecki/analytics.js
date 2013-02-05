@@ -37,12 +37,14 @@ analytics.addProvider('Intercom', {
         if (!userId) return;
 
         // Pass traits directly in to Intercom's `custom_data`.
-        var settings = window.intercomSettings = {
+        window.intercomSettings = {
             app_id      : this.settings.appId,
             user_id     : userId,
             user_hash   : this.settings.userHash,
             custom_data : traits || {}
         };
+
+        var settings = window.intercomSettings;
 
         // Augment `intercomSettings` with some of the special traits.
         if (traits) {

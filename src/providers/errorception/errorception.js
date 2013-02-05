@@ -20,7 +20,8 @@ analytics.addProvider('Errorception', {
         settings = analytics.utils.resolveSettings(settings, 'projectId');
         analytics.utils.extend(this.settings, settings);
 
-        var _errs = window._errs = window._errs || [settings.projectId];
+        window._errs = window._errs || [settings.projectId];
+        var _errs = window._errs;
 
         (function(a,b){
             a.onerror = function () {
