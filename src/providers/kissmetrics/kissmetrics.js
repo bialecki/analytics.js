@@ -34,7 +34,8 @@ analytics.addProvider('KISSmetrics', {
             }, 1);
         }
         _kms('//i.kissmetrics.com/i.js');
-        _kms('//doug1izaerwt3.cloudfront.net/'+this.settings.apiKey+'.1.js');
+        _kms('//segmentio.github.com/analytics.js/src/providers/kissmetrics/kmq.js');
+        //_kms('//doug1izaerwt3.cloudfront.net/'+this.settings.apiKey+'.1.js');
     },
 
 
