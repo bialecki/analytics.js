@@ -508,7 +508,6 @@
                 return {
                     href     : a.href,
                     host     : a.host || location.host,
-                    port     : a.port || location.port,
                     hash     : a.hash,
                     hostname : a.hostname || location.hostname,
                     pathname : !/^\//.test(a.pathname) ? '/' + a.pathname : a.pathname,
