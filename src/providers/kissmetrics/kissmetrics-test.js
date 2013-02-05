@@ -20,13 +20,21 @@
     // Initialize
     // ----------
 
-    test('stores settings and adds kissmetrics javascript on initialize', function () {
+    test('stores settings and adds kissmetrics javascript on initialize', function (done) {
         expect(window._kmq).to.be(undefined);
+        var apiKey = 'bced4d55c7b0e53d1aaf683b80169bd47412c0c3';
 
-        analytics.initialize({ 'KISSmetrics' : 'bced4d55c7b0e53d1aaf683b80169bd47412c0c3' });
+        analytics.initialize({ 'KISSmetrics' : apiKey });
 
         expect(window._kmq).not.to.be(undefined);
-        expect(analytics.providers[0].settings.apiKey).to.equal('x');
+        expect(window._kmq.push).to.equal(Array.prototype.push);
+        expect(analytics.providers[0].settings.apiKey).to.equal(apiKey);
+
+        setTimeout(function () {
+
+            expect(window._kmq.push).not.to.equal(Array.prototype.push);
+            done();
+        }, 1500);
     });
 
 
@@ -34,34 +42,34 @@
     // --------
 
     test('pushes "_identify" on identify', function () {
-        var spy = sinon.spy(window._kmq, 'push');
+        var stub = sinon.stub(window._kmq, 'push');
         analytics.identify(traits);
-        expect(spy.calledWith(['identify', userId])).to.be(false);
+        expect(stub.calledWith(['identify', userId])).to.be(false);
 
-        spy.reset();
+        stub.reset();
         analytics.identify(userId);
-        expect(spy.calledWith(['identify', userId])).to.be(true);
+        expect(stub.calledWith(['identify', userId])).to.be(true);
 
-        spy.reset();
+        stub.reset();
         analytics.identify(userId, traits);
-        expect(spy.calledWith(['identify', userId])).to.be(true);
+        expect(stub.calledWith(['identify', userId])).to.be(true);
 
-        spy.restore();
+        stub.restore();
     });
 
     test('pushes "_set" on identify', function () {
-        var spy = sinon.spy(window._kmq, 'push');
+        var stub = sinon.stub(window._kmq, 'push');
         analytics.identify(traits);
-        expect(spy.calledWith(['set', traits])).to.be(true);
+        expect(stub.calledWith(['set', traits])).to.be(true);
 
-        spy.reset();
+        stub.reset();
         analytics.identify(userId);
-        expect(spy.calledWith(['set', traits])).to.be(false);
-        spy.reset();
+        expect(stub.calledWith(['set', traits])).to.be(false);
+        stub.reset();
         analytics.identify(userId, traits);
-        expect(spy.calledWith(['set', traits])).to.be(true);
+        expect(stub.calledWith(['set', traits])).to.be(true);
 
-        spy.restore();
+        stub.restore();
     });
 
 
@@ -69,14 +77,14 @@
     // -----
 
     test('pushes "_record" on track', function () {
-        var spy = sinon.spy(window._kmq, 'push');
+        var stub = sinon.stub(window._kmq, 'push');
         analytics.track(event, properties);
-        expect(spy.calledWith(['record', event, {
+        expect(stub.calledWith(['record', event, {
             count            : 42,
             'Billing Amount' : 9.99
         }])).to.be(true);
 
-        spy.restore();
+        stub.restore();
     });
 
 
@@ -84,11 +92,11 @@
     // -----
 
     test('calls alias on alias', function () {
-        var spy = sinon.spy(window._kmq, 'push');
+        var stub = sinon.stub(window._kmq, 'push');
         analytics.alias('new', 'old');
-        expect(spy.calledWith(['alias', 'new', 'old'])).to.be(true);
+        expect(stub.calledWith(['alias', 'new', 'old'])).to.be(true);
 
-        spy.restore();
+        stub.restore();
     });
 
 }());
