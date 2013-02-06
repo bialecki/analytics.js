@@ -35,7 +35,7 @@ analytics.addProvider('Mixpanel', {
             b = c.createElement('script');
             b.type = 'text/javascript';
             b.async = true;
-            b.src = ('https:' === c.location.protocol ? 'https:' : 'http:') + '//cdn.mxpnl.com/libs/mixpanel-2.2.min.js';
+            b.src = ('https:' === c.location.protocol ? 'https:' : 'http:') + '//segmentio.github.com/analytics.js/src/providers/mixpanel/mixpanel-2.2.min.js';
             d = c.getElementsByTagName('script')[0];
             d.parentNode.insertBefore(b, d);
             a._i = [];
