@@ -2824,7 +2824,8 @@ Globals should be all caps
     }
     if (SNIPPET_VERSION < 1.1) {
         // mixpanel wasn't initialized properly, report error and quit
-        console.critical("Version mismatch; please ensure you're using the latest version of the Mixpanel code snippet.");
+        console.critical(mixpanel.__SV);
+        console.critical("Version mismatch; please ensure you're using the latest version of the Mixpanel code snippet. " + SNIPPET_VERSION);
         return;
     }
 
