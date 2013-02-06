@@ -49,7 +49,6 @@
         expect(analytics.providers[0].settings.people).to.be(true);
 
         // test actual loading
-        expect(window.mixpanel.config).to.be(undefined);
         setTimeout(function () {
             expect(window.mixpanel.config).not.to.be(undefined);
             done();
